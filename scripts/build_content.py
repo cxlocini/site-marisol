@@ -11,6 +11,7 @@ from pypdf import PdfReader
 ROOT = Path(__file__).resolve().parents[1]
 PDF_PATH = Path(r"C:\Users\rafac\OneDrive\Documentos\document.pdf")
 OUT = ROOT / "public" / "guide.json"
+SRC_OUT = ROOT / "src" / "content" / "guide.json"
 
 
 SECTION_PAGES = {
@@ -119,7 +120,10 @@ def main() -> None:
         "nav": nav,
         "pages": pages,
     }
-    OUT.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    content = json.dumps(data, ensure_ascii=False, indent=2)
+    OUT.write_text(content, encoding="utf-8")
+    SRC_OUT.parent.mkdir(parents=True, exist_ok=True)
+    SRC_OUT.write_text(content, encoding="utf-8")
 
 
 if __name__ == "__main__":

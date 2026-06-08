@@ -1,30 +1,12 @@
 const state = {
-  data: null,
   fontScale: Number(localStorage.getItem("fontScale") || "1"),
   highContrast: localStorage.getItem("highContrast") === "true",
 };
 
-const content = document.querySelector("#guideContent");
-const toc = document.querySelector("#tableOfContents");
+const pages = Array.from(document.querySelectorAll(".page-section"));
 const search = document.querySelector("#guideSearch");
 const searchStatus = document.querySelector("#searchStatus");
 const contrastToggle = document.querySelector("#contrastToggle");
-
-function escapeHtml(value) {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
-}
-
-function highlight(value, query) {
-  const safe = escapeHtml(value);
-  if (!query) return safe;
-  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return safe.replace(new RegExp(`(${escaped})`, "gi"), "<mark>$1</mark>");
-}
 
 function applyPreferences() {
   document.documentElement.style.setProperty("--font-scale", String(state.fontScale));
@@ -34,36 +16,20 @@ function applyPreferences() {
   localStorage.setItem("highContrast", String(state.highContrast));
 }
 
-function renderToc() {
-  toc.innerHTML = state.data.nav
-    .map((item) => `<li><a href="#${item.id}">${escapeHtml(item.title)}</a></li>`)
-    .join("");
-}
-
-function renderPages(query = "") {
+function filterPages(query = "") {
   const normalizedQuery = query.trim().toLocaleLowerCase("pt-BR");
   let count = 0;
-  content.innerHTML = state.data.pages
-    .map((page) => {
-      const matches = !normalizedQuery || page.text.toLocaleLowerCase("pt-BR").includes(normalizedQuery);
-      if (matches) count += 1;
-      const paragraphs = page.paragraphs.length
-        ? page.paragraphs.map((p) => `<p>${highlight(p, query)}</p>`).join("")
-        : "<p>Esta página contém elementos gráficos ou créditos sem texto extraível.</p>";
-      return `
-        <article class="page-section" id="${page.id}" aria-labelledby="${page.id}-title" ${matches ? "" : "hidden"}>
-          <p class="page-meta">Página ${page.page} de ${state.data.pageCount}</p>
-          <h3 id="${page.id}-title">${escapeHtml(page.title)}</h3>
-          ${paragraphs}
-        </article>
-      `;
-    })
-    .join("");
+
+  pages.forEach((page) => {
+    const matches = !normalizedQuery || page.textContent.toLocaleLowerCase("pt-BR").includes(normalizedQuery);
+    page.hidden = !matches;
+    if (matches) count += 1;
+  });
 
   if (normalizedQuery) {
     searchStatus.textContent = `${count} página${count === 1 ? "" : "s"} encontrada${count === 1 ? "" : "s"}.`;
   } else {
-    searchStatus.textContent = `${state.data.pageCount} páginas carregadas.`;
+    searchStatus.textContent = `${pages.length} páginas carregadas.`;
   }
 }
 
@@ -91,12 +57,12 @@ function bindControls() {
 
   document.querySelector("#clearSearch").addEventListener("click", () => {
     search.value = "";
-    renderPages("");
+    filterPages("");
     search.focus();
   });
 
   search.addEventListener("input", (event) => {
-    renderPages(event.target.value);
+    filterPages(event.target.value);
   });
 
   document.querySelector("#toTop").addEventListener("click", () => {
@@ -104,16 +70,6 @@ function bindControls() {
   });
 }
 
-async function init() {
-  applyPreferences();
-  bindControls();
-  const response = await fetch("guide.json");
-  state.data = await response.json();
-  renderToc();
-  renderPages();
-}
-
-init().catch(() => {
-  content.innerHTML = "<p>Não foi possível carregar o conteúdo do guia.</p>";
-  searchStatus.textContent = "Erro ao carregar conteúdo.";
-});
+applyPreferences();
+bindControls();
+filterPages(search.value);

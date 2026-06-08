@@ -9,10 +9,20 @@ class Parser(HTMLParser):
         super().__init__()
         self.tags: list[str] = []
         self.attrs: list[tuple[str, dict[str, str]]] = []
+        self.ids: list[str] = []
+        self.hrefs: list[str] = []
+        self.headings: list[str] = []
 
     def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        attrs_dict = {key: value or "" for key, value in attrs}
         self.tags.append(tag)
-        self.attrs.append((tag, {key: value or "" for key, value in attrs}))
+        self.attrs.append((tag, attrs_dict))
+        if "id" in attrs_dict:
+            self.ids.append(attrs_dict["id"])
+        if "href" in attrs_dict:
+            self.hrefs.append(attrs_dict["href"])
+        if tag in {"h1", "h2", "h3", "h4", "h5", "h6"}:
+            self.headings.append(tag)
 
 
 def luminance(hex_color: str) -> float:
@@ -32,6 +42,7 @@ def main() -> None:
     css = Path("public/styles.css").read_text(encoding="utf-8")
     parser = Parser()
     parser.feed(html)
+    internal_links = [href[1:] for href in parser.hrefs if href.startswith("#")]
 
     checks = {
         "html_lang_pt_BR": 'lang="pt-BR"' in html,
@@ -44,6 +55,11 @@ def main() -> None:
         "has_focus_visible_styles": ":focus-visible" in css,
         "has_reduced_motion": "prefers-reduced-motion" in css,
         "has_pdf_download_link": "cartilha-dignidade-e-cidadania-para-travestis-e-mulheres-trans-vf.pdf" in html,
+        "content_pre_rendered": html.count('class="page-section"') == 109,
+        "toc_pre_rendered": html.count("<li><a href=") >= 30,
+        "ids_unique": len(parser.ids) == len(set(parser.ids)),
+        "internal_links_valid": all(link in parser.ids for link in internal_links),
+        "heading_hierarchy_starts_correctly": parser.headings[:3] == ["h1", "h2", "h2"],
     }
     contrast_checks = {
         "text_on_background": contrast("#1d1d1f", "#fbfaf7"),

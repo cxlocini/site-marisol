@@ -8,12 +8,15 @@ O projeto converte o PDF original em uma experiência HTML navegável, pesquisá
 
 ## Estrutura
 
-- `public/index.html`: página estática principal.
+- `public/index.html`: página estática principal com o conteúdo completo pré-renderizado.
 - `public/styles.css`: estilos acessíveis, responsivos e com modo alto contraste.
-- `public/app.js`: renderização do conteúdo, busca e preferências de leitura.
+- `public/app.js`: busca e preferências de leitura, sem depender de JavaScript para exibir o conteúdo.
 - `public/guide.json`: conteúdo extraído do PDF.
+- `src/content/guide.json`: fonte estruturada do conteúdo extraído.
 - Link público oficial do Ministério das Mulheres: PDF original para download.
 - `scripts/build_content.py`: gerador do JSON a partir do PDF local.
+- `scripts/render_index.py`: gerador do HTML estático a partir do JSON.
+- `scripts/audit_static.py`: auditoria local de estrutura acessível e contraste.
 - `firebase.json`: configuração do Firebase Hosting sem ID de projeto fixo.
 
 ## Desenvolvimento local
@@ -32,6 +35,7 @@ Com o PDF original disponível em `C:\Users\rafac\OneDrive\Documentos\document.p
 
 ```bash
 python scripts/build_content.py
+python scripts/render_index.py
 ```
 
 ## Auditoria estática
