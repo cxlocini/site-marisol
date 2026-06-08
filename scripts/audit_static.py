@@ -54,6 +54,8 @@ def main() -> None:
         "no_iframes": "iframe" not in parser.tags,
         "has_focus_visible_styles": ":focus-visible" in css,
         "has_reduced_motion": "prefers-reduced-motion" in css,
+        "has_responsive_layout": "@media (max-width: 56rem)" in css and "@media (max-width: 40rem)" in css,
+        "no_viewport_scaled_fonts": "vw" not in css and "vmin" not in css and "vmax" not in css,
         "has_pdf_download_link": "cartilha-dignidade-e-cidadania-para-travestis-e-mulheres-trans-vf.pdf" in html,
         "content_pre_rendered": html.count('class="page-section"') == 109,
         "toc_pre_rendered": html.count("<li><a href=") >= 30,
